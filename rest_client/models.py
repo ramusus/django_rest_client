@@ -79,15 +79,14 @@ class Model(object):
         setattr(self.objects, 'model', self.__class__)
         self._substitute_fields_and_generate_map()
 
+        # set initial values
+        for field_name, field in self.Rest.fields.items():
+            setattr(self, field_name, kwargs[field_name] if field_name in kwargs else None)
+
         if raw_data:
             self.get_response(raw_data)
         elif object_dict:
             self._parse_object(object_dict)
-
-        # set initial values
-        for field_name, field in self.Rest.fields.items():
-            if field_name in kwargs:
-                setattr(self, field_name, kwargs[field_name])
 
     def __setattr__(self, name, value, field=None):
         '''

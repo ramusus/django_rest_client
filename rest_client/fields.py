@@ -17,7 +17,7 @@ class Field(models.Field):
             self.set_value(self.default)
 
     def set_value(self, value):
-        self.value = self.to_python(value)
+        self.value = self.to_python(value) if value is not None else None
 
     def __repr__(self):
         return str(self.value) or '<%s: None>' % self.get_internal_type()
