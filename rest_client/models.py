@@ -6,7 +6,7 @@ from fields import CharField, DateTimeField, BooleanField, IntegerField, ArrayFi
 from urlparse import urljoin
 import httplib
 import urllib
-import json
+import simplejson as json
 import logging
 
 __all__ = ['FailResponse', 'Manager', 'Model', 'CharField', 'DateTimeField', 'BooleanField', 'IntegerField', 'ArrayField']
