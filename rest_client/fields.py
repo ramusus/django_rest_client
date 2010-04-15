@@ -43,7 +43,7 @@ class ArrayField(Field, list):
 
     def __init__(self, items_type, **kwargs):
         from models import Model
-        if items_type in (str,int,unicode) or issubclass(items_type, Model):
+        if items_type in (str,int,unicode,tuple,dict) or issubclass(items_type, Model):
             self.type = items_type
         else:
             raise TypeError("Error type attribute, it must be str, unicode, int or subclass of Model, but got %s" % items_type)

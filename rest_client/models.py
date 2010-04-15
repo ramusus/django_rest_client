@@ -46,7 +46,6 @@ class Manager(object):
             model_instance._parse_object(object)
             objects[i] = model_instance
 
-        print objects
         return objects
 
     def get(self, id=None, **kwargs):
@@ -81,7 +80,12 @@ class Model(object):
 
         # set initial values
         for field_name, field in self.Rest.fields.items():
-            setattr(self, field_name, kwargs[field_name] if field_name in kwargs else None)
+            if field_name in kwargs:
+                setattr(self, field_name, kwargs[field_name])
+            elif field.default != models.fields.NOT_PROVIDED:
+                setattr(self, field_name, field.default)
+            else:
+                setattr(self, field_name, None)
 
         if raw_data:
             self.get_response(raw_data)
