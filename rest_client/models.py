@@ -35,8 +35,7 @@ class Manager(object):
         Send GET request for all objects of model
         '''
         model_instance = self.model()
-        raw_data = model_instance._request('GET', model_instance._get_object_url())
-        objects = model_instance.get_response(raw_data)
+        objects = model_instance.request('GET')
 
         if not isinstance(objects, list):
             raise FailResponse("Response object must be list, not '%s'" % typ(objects))
@@ -113,27 +112,50 @@ class Model(object):
         else:
             return self.Rest.url
 
-    def get(self, id):
-        self._request_parse('GET', id=id)
-
-    def create(self):
-        params = self.get_rest_params()
-        self._request_parse('POST', params=params)
-
-    def _request_parse(self, method, id=None, params=None):
+    def request(self, method, id=None, params=None):
+        '''
+        Public interface method, can be extended in subclass
+        Send request, handle and return response.
+        '''
         raw_data = self._request(method, self._get_object_url(id), params)
-        object = self.get_response(raw_data)
-        self._parse_object(object)
+        return self.get_response(raw_data)
+
+    def request_and_parse(self, method, id=None, params=None):
+        '''
+        Send request, handle response and parse object if it returned
+        '''
+        object = self.request(method, id, params)
+        if object:
+            self._parse_object(object)
+
+    def get(self, id):
+        '''Send HTTP GET request'''
+        self.request_and_parse('GET', id=id)
 
     def delete(self):
-        self._request('DELETE', self._get_object_url(self.id))
+        '''Send HTTP DELETE request'''
+        self.request_and_parse('DELETE', self._get_object_url(self.id))
         self.id = None
         return True
 
-    def save(self):
-        return self._request('PUT', self._get_object_url(self.id))
+    def post(self):
+        '''Send HTTP POST request'''
+        params = self.get_rest_params()
+        self.request_and_parse('POST', params=params)
 
-    def _request(self, type, url, params=None):
+    def put(self):
+        '''Send HTTP PUT request'''
+        return self.request_and_parse('PUT', self._get_object_url(self.id))
+
+    def create(self):
+        '''Send HTTP POST request, method for CRUD compatibility'''
+        return self.post()
+
+    def save(self):
+        '''Send HTTP PUT request, method for CRUD compatibility'''
+        return self.put()
+
+    def _request(self, method, url, params=None):
 
         if not params:
             params = {}
@@ -150,7 +172,7 @@ class Model(object):
 
         params = urllib.urlencode(params)
 
-        if type in ['GET','DELETE']:
+        if method in ['GET','DELETE']:
             url += '?'+params
             body = ''
         else:
@@ -170,7 +192,7 @@ class Model(object):
         }
 
         conn = httplib.HTTPConnection(domain)
-        conn.request(type, url, body, headers)
+        conn.request(method, url, body, headers)
         response = conn.getresponse()
         data = response.read()
         conn.close()
@@ -179,7 +201,7 @@ class Model(object):
             logging.basicConfig(filename=settings.REST_CLIENT_LOG, level=logging.DEBUG, format='\n[%(asctime)s] %(message)s')
             logging.info('%(type)s %(url)s HTTP/1.1\n%(headers)s\n\n%(body)s' % {
                 'body': body,
-                'type': type,
+                'type': method,
                 'url': url,
                 'headers': '\n'.join([': '.join([key, value]) for key, value in headers.items() + [('Host',domain)]])
             })
@@ -190,6 +212,8 @@ class Model(object):
     def get_response(self, raw_data):
         '''
         Parse response, check status of response and return object in 'data' field
+        If success returns contents of 'data' field or True,
+        If error generate FailResponse Exception
         '''
         try:
             data = json.loads(raw_data)
@@ -199,8 +223,6 @@ class Model(object):
         if data['response'] == 'ok':
             if 'data' in data:
                 return data['data']
-            else:
-                return data
         elif data['response'] == 'fail':
             raise FailResponse("Request failed with error %d (%s)" % (data['code'], data['message']), data['code'])
         else:
