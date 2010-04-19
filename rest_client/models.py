@@ -38,7 +38,7 @@ class Manager(object):
         objects = model_instance.request('GET')
 
         if not isinstance(objects, list):
-            raise FailResponse("Response object must be list, not '%s'" % typ(objects))
+            raise model_instance.FailResponse("Response object must be list, not '%s'" % typ(objects))
 
         for i, object in enumerate(objects):
             model_instance = self.model()
@@ -145,7 +145,8 @@ class Model(object):
 
     def put(self):
         '''Send HTTP PUT request'''
-        return self.request_and_parse('PUT', self._get_object_url(self.id))
+        params = self.get_rest_params()
+        return self.request_and_parse('PUT', self._get_object_url(self.id), params=params)
 
     def create(self):
         '''Send HTTP POST request, method for CRUD compatibility'''
@@ -218,15 +219,15 @@ class Model(object):
         try:
             data = json.loads(raw_data)
         except:
-            raise FailResponse("Can not parse response with content '%s'" % raw_data)
+            raise self.FailResponse("Can not parse response with content '%s'" % raw_data)
 
         if data['response'] == 'ok':
             if 'data' in data:
                 return data['data']
         elif data['response'] == 'fail':
-            raise FailResponse("Request failed with error %d (%s)" % (data['code'], data['message']), data['code'])
+            raise self.FailResponse("Request failed with error %d (%s)" % (data['code'], data['message']), data['code'])
         else:
-            raise FailResponse("Can not find response key in content '%s'" % raw_data)
+            raise self.FailResponse("Can not find response key in content '%s'" % raw_data)
 
     def _substitute_fields_and_generate_map(self):
         '''
