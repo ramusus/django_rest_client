@@ -43,7 +43,7 @@ class ArrayField(Field, list):
 
     def __init__(self, items_type, **kwargs):
         from models import Model
-        if items_type in (str,int,unicode,tuple,dict) or issubclass(items_type, Model):
+        if items_type in (str,int,unicode,tuple,dict,list) or issubclass(items_type, Model):
             self.type = items_type
         else:
             raise TypeError("Error type attribute, it must be str, unicode, int or subclass of Model, but got %s" % items_type)
@@ -67,6 +67,17 @@ class ArrayField(Field, list):
                         continue
                     value[i] = self.type(item)
             else:
+                raise TypeError("Error type of ArrayField, list expected, got %s" % type(value))
+        return value
+
+class DictField(Field, dict):
+
+    def get_internal_type(self):
+        return "DictField"
+
+    def to_python(self, value):
+        if value is not None:
+            if not isinstance(value, dict):
                 raise TypeError("Error type of ArrayField, list expected, got %s" % type(value))
         return value
 

@@ -2,14 +2,14 @@
 from django.db import models
 from django.core import exceptions
 from django.conf import settings
-from fields import CharField, DateTimeField, BooleanField, IntegerField, ArrayField
+from fields import CharField, DateTimeField, BooleanField, IntegerField, ArrayField, DictField
 from urlparse import urljoin
 import httplib
 import urllib
 import simplejson as json
 import logging
 
-__all__ = ['FailResponse', 'Manager', 'Model', 'CharField', 'DateTimeField', 'BooleanField', 'IntegerField', 'ArrayField']
+__all__ = ['FailResponse', 'Manager', 'Model', 'CharField', 'DateTimeField', 'BooleanField', 'IntegerField', 'ArrayField', 'DictField']
 
 class FailResponse(Exception):
     '''
